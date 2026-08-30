@@ -1,13 +1,18 @@
 from django.contrib.auth.hashers import check_password
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from authentication.jwt_auth import create_access_token
 from authentication.models import User, UserSession
 
 
 class LoginView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
@@ -47,6 +52,8 @@ class LoginView(APIView):
             {
                 "message": "Đăng nhập thành công",
                 "data": {
+                    "access_token": create_access_token(user),
+                    "token_type": "Bearer",
                     "session_id": str(session.session_id),
                     "user": {
                         "user_id": user.user_id,

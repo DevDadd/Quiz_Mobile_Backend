@@ -28,6 +28,10 @@ class User(models.Model):
 
     created_at = models.DateTimeField()
 
+    @property
+    def is_authenticated(self):
+        return True
+
     class Meta:
         managed = False
         db_table = "users"
