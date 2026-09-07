@@ -22,5 +22,6 @@ urlpatterns = [
     path('auth/', include('authentication.urls')),
     path('leaderboard/', include('leaderboard.urls')),
     path('questions/', include('questions.urls')),
+    path('', include('matches.urls')),
 ]
 

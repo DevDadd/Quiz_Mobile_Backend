@@ -1,0 +1,268 @@
+### HƯỚNG DẪN
+# File này dùng với extension "REST Client" (Huachao Mao) trong VSCode.
+# Cài xong, mỗi block dưới đây sẽ hiện link "Send Request" phía trên - bấm vào để gọi.
+# Chạy server trước: python manage.py runserver
+#
+# Các biến @xxx = {{tenRequest.response.body.$.duong.dan}} sẽ TỰ ĐỘNG lấy giá trị từ response
+# của request phía trên (đã đặt tên bằng dòng "# @name tenRequest") - cứ chạy lần lượt từ
+# trên xuống dưới, không cần copy-paste tay token/id.
+#
+# Những chỗ cần bạn tự điền tay (đánh dấu "<-- ĐIỀN TAY"): order_index/option_id lấy từ
+# response của "GET .../questions/" ở ngay phía trên, vì mỗi lần seed random khác nhau.
+
+@baseUrl = http://127.0.0.1:8000
+
+
+### ========================================================================
+### 0. TẠO 2 TÀI KHOẢN TEST (bỏ qua nếu đã có sẵn - sẽ báo lỗi "đã tồn tại")
+### ========================================================================
+
+### Đăng ký user 1
+POST {{baseUrl}}/auth/register/
+Content-Type: application/json
+
+{
+  "username": "tester_p1",
+  "password": "Test@1234",
+  "display_name": "Tester P1"
+}
+
+### Đăng ký user 2
+POST {{baseUrl}}/auth/register/
+Content-Type: application/json
+
+{
+  "username": "tester_p2",
+  "password": "Test@1234",
+  "display_name": "Tester P2"
+}
+
+
+### ========================================================================
+### 1. LOGIN (bắt buộc chạy trước mọi thứ khác - lấy token)
+### ========================================================================
+
+### Login P1
+# @name loginP1
+POST {{baseUrl}}/auth/login/
+Content-Type: application/json
+
+{
+  "username": "tester_p1",
+  "password": "Test@1234"
+}
+
+###
+@tokenP1 = {{loginP1.response.body.$.data.session_id}}
+@userId1 = {{loginP1.response.body.$.data.user.user_id}}
+
+### Login P2
+# @name loginP2
+POST {{baseUrl}}/auth/login/
+Content-Type: application/json
+
+{
+  "username": "tester_p2",
+  "password": "Test@1234"
+}
+
+###
+@userId2 = {{loginP2.response.body.$.data.user.user_id}}
+@sessionP2 = {{loginP2.response.body.$.data.session_id}}
+
+
+### ========================================================================
+### 2. AUTH / PRESENCE co ban (Dev 1 - test nhanh xem token con song khong)
+### ========================================================================
+
+### GET /me (P1)
+GET {{baseUrl}}/auth/me/
+Authorization: {{tokenP1}}
+
+### Heartbeat P1 (bat buoc goi dinh ky moi 3-5s trong app that de giu online)
+POST {{baseUrl}}/auth/session/heartbeat/
+Authorization: {{tokenP1}}
+
+### Heartbeat P2
+POST {{baseUrl}}/auth/session/heartbeat/
+Authorization: {{sessionP2}}
+
+### Danh sach nguoi choi dang online (P2 phai thay trong list nay thi moi thach dau duoc)
+GET {{baseUrl}}/leaderboard/online-players/
+Authorization: {{tokenP1}}
+
+
+### ========================================================================
+### 3. BOT MATCH FLOW (#19-#25) - chi can 1 nguoi, khong can doi thu that
+### ========================================================================
+
+### Tao tran voi bot
+# bot_difficulty: "easy" | "medium" | "hard"
+# @name createBotMatch
+POST {{baseUrl}}/matches/bot/
+Authorization: {{tokenP1}}
+Content-Type: application/json
+
+{
+  "bot_difficulty": "medium",
+  "question_count": 5,
+  "time_limit_seconds": 60
+}
+
+###
+@botMatchId = {{createBotMatch.response.body.$.match_id}}
+
+### Xem thong tin phong choi
+GET {{baseUrl}}/matches/{{botMatchId}}/
+Authorization: {{tokenP1}}
+
+### Lay de bai (COPY order_index + option_id tu day de dien vao 2 request ben duoi)
+GET {{baseUrl}}/matches/{{botMatchId}}/questions/
+Authorization: {{tokenP1}}
+
+### Luu tam dap an dang chon (PUT - co the goi nhieu lan, F5 khong mat bai)
+# <-- DIEN TAY: thay order_index/selected_option_id bang gia tri that lay tu response tren
+PUT {{baseUrl}}/matches/{{botMatchId}}/answers/
+Authorization: {{tokenP1}}
+Content-Type: application/json
+
+[
+  { "order_index": 0, "selected_option_id": 1 },
+  { "order_index": 1, "selected_option_id": 5 }
+]
+
+### Poll trang thai tran (goi lien tuc moi 1s trong app that)
+GET {{baseUrl}}/matches/{{botMatchId}}/state/
+Authorization: {{tokenP1}}
+
+### Nop bai (submit toan bo dap an cuoi cung)
+# <-- DIEN TAY: dien du 5 cau (order_index 0..4) voi option_id tuong ung
+POST {{baseUrl}}/matches/{{botMatchId}}/submit/
+Authorization: {{tokenP1}}
+Content-Type: application/json
+
+[
+  { "order_index": 0, "selected_option_id": 1 },
+  { "order_index": 1, "selected_option_id": 5 },
+  { "order_index": 2, "selected_option_id": 9 },
+  { "order_index": 3, "selected_option_id": 13 },
+  { "order_index": 4, "selected_option_id": 17 }
+]
+
+### Xem ket qua cuoi (ai thang, dap an dung tung cau)
+GET {{baseUrl}}/matches/{{botMatchId}}/result/
+Authorization: {{tokenP1}}
+
+
+### ========================================================================
+### 4. CHALLENGE + PVP MATCH FLOW (#14-#18, #20-#26)
+### Nho chay lai phan (2) Heartbeat cho ca P1 va P2 truoc khi thach dau,
+### de dam bao ca 2 dang "online + idle" (khong bi coi la busy/offline).
+### ========================================================================
+
+### P1 thach dau P2
+# @name createChallenge
+POST {{baseUrl}}/challenges/
+Authorization: {{tokenP1}}
+Content-Type: application/json
+
+{
+  "opponent_id": {{userId2}}
+}
+
+###
+@challengeId = {{createChallenge.response.body.$.challenge_id}}
+
+### P2 xem loi thach dau (thuong lay qua heartbeat, day la cach poll rieng)
+GET {{baseUrl}}/challenges/{{challengeId}}/
+Authorization: {{sessionP2}}
+
+### P2 dong y (Accept) -> tao tran + 2 match_participants + sinh de
+# @name acceptChallenge
+POST {{baseUrl}}/challenges/{{challengeId}}/accept/
+Authorization: {{sessionP2}}
+
+###
+@pvpMatchId = {{acceptChallenge.response.body.$.match_id}}
+
+# --- Cac request duoi day chay 1 lan cho MOI request rieng theo tung nguoi ---
+
+### (Thay the) P2 tu choi loi thach dau - CHI DUNG KHI MUON TEST REJECT thay vi Accept o tren
+POST {{baseUrl}}/challenges/{{challengeId}}/reject/
+Authorization: {{sessionP2}}
+
+### (Thay the) P1 tu rut lai loi thach dau - CHI DUNG KHI MUON TEST CANCEL
+POST {{baseUrl}}/challenges/{{challengeId}}/cancel/
+Authorization: {{tokenP1}}
+
+### P1 xem cau hoi cua tran PvP
+GET {{baseUrl}}/matches/{{pvpMatchId}}/questions/
+Authorization: {{tokenP1}}
+
+### P2 xem cau hoi (cung mot de voi P1)
+GET {{baseUrl}}/matches/{{pvpMatchId}}/questions/
+Authorization: {{sessionP2}}
+
+### P1 nop bai (dien tay dap an theo de that nhan duoc o tren, mac dinh 10 cau)
+# <-- DIEN TAY
+POST {{baseUrl}}/matches/{{pvpMatchId}}/submit/
+Authorization: {{tokenP1}}
+Content-Type: application/json
+
+[
+  { "order_index": 0, "selected_option_id": 1 },
+  { "order_index": 1, "selected_option_id": 5 }
+]
+
+### P2 poll xem P1 nop chua
+GET {{baseUrl}}/matches/{{pvpMatchId}}/state/
+Authorization: {{sessionP2}}
+
+### P2 nop bai
+# <-- DIEN TAY
+POST {{baseUrl}}/matches/{{pvpMatchId}}/submit/
+Authorization: {{sessionP2}}
+Content-Type: application/json
+
+[
+  { "order_index": 0, "selected_option_id": 1 },
+  { "order_index": 1, "selected_option_id": 5 }
+]
+
+### Xem ket qua tran PvP (goi duoc boi ca P1 lan P2)
+GET {{baseUrl}}/matches/{{pvpMatchId}}/result/
+Authorization: {{tokenP1}}
+
+### (Tuy chon) P1 bo cuoc giua tran - CHI GOI KHI TRAN CON DANG "ongoing"
+POST {{baseUrl}}/matches/{{pvpMatchId}}/quit/
+Authorization: {{tokenP1}}
+
+
+### ========================================================================
+### 5. LEADERBOARD / STATS (Dev 1 - de doi chieu diem sau khi test xong)
+### ========================================================================
+
+### BXH
+GET {{baseUrl}}/leaderboard/leaderboard/
+Authorization: {{tokenP1}}
+
+### Thong ke ca nhan P1
+GET {{baseUrl}}/leaderboard/users/{{userId1}}/stats/
+Authorization: {{tokenP1}}
+
+### Lich su tran cua P1
+GET {{baseUrl}}/leaderboard/users/{{userId1}}/matches/
+Authorization: {{tokenP1}}
+
+
+### ========================================================================
+### 6. LOGOUT
+### ========================================================================
+
+### Logout P1
+POST {{baseUrl}}/auth/logout/
+Authorization: {{tokenP1}}
+
+### Logout P2
+POST {{baseUrl}}/auth/logout/
+Authorization: {{sessionP2}}

@@ -14,8 +14,7 @@ class OnlinePlayersView(APIView):
             SELECT u.user_id, u.display_name, u.total_score,
             CASE WHEN s.current_match_id IS NOT NULL THEN 'busy' ELSE 'idle' END AS status
             FROM sessions s JOIN users u USING (user_id)
-            WHERE s.status = 'online'
-            AND s.last_heartbeat_at > now() - interval '15 seconds'
+            WHERE s.last_heartbeat_at > now() - interval '15 seconds'
             AND u.user_id <> %s
             ORDER BY u.total_score DESC
             """
@@ -122,4 +121,4 @@ class UserMatchesView(APIView):
                 d['points_earned'] = float(d['points_earned'])
                 
         return Response(data, status=200)
-
+
