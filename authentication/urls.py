@@ -17,9 +17,5 @@ urlpatterns.extend([
 from authentication.views import LeaderboardView, UserStatsView, UserMatchesView, QuestionsView, QuestionDetailView
 
 urlpatterns.extend([
-    path('leaderboard/', LeaderboardView.as_view(), name='leaderboard'),
-    path('users/<int:id>/stats/', UserStatsView.as_view(), name='user_stats'),
-    path('users/<int:id>/matches/', UserMatchesView.as_view(), name='user_matches'),
-    path('questions/', QuestionsView.as_view(), name='questions'),
-    path('questions/<int:id>/', QuestionDetailView.as_view(), name='question_detail'),
-])
+                    ])
+
