@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'leaderboard',
     'questions',
     'matches',
+    'practice',
 ]
 
 MIDDLEWARE = [

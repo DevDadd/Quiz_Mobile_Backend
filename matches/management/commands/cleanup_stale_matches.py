@@ -12,7 +12,7 @@ class Command(BaseCommand):
         python manage.py cleanup_stale_matches
     """
 
-    help = "Tự động submit + finalize các trận đã hết giờ mà không client nào poll."
+    help = "Tự động submit + calculate_result các trận đã hết giờ mà không client nào poll."
 
     def handle(self, *args, **options):
         with connection.cursor() as cursor:

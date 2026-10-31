@@ -1,4 +1,3 @@
-from django.contrib.auth.hashers import check_password
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,39 +8,9 @@ from authentication.models import User, UserSession
 
 class LoginView(APIView):
     def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-
-        if not username or not password:
-            return Response(
-                {"error": "Username and password are required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return Response(
-                {"error": "Invalid username or password."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        if not check_password(password, user.password_hash):
-            return Response(
-                {"error": "Invalid username or password."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        now = timezone.now()
-        session, _ = UserSession.objects.update_or_create(
-            user=user,
-            defaults={
-                "status": "idle",
-                "current_match_id": None,
-                "last_heartbeat_at": now,
-                "updated_at": now,
-            },
-        )
+        session, user, error = login(request.data.get("username"), request.data.get("password"))
+        if error:
+            return Response({"error": error[0]}, status=error[1])
 
         return Response(
             {
@@ -60,28 +29,18 @@ class LoginView(APIView):
         )
 
 from django.db import connection
-from django.contrib.auth.hashers import make_password
-from authentication.services import get_auth_session
+from authentication.services import get_auth_session, login, register_new_account
 
 class RegisterView(APIView):
     def post(self, request):
         username = request.data.get("username")
-        password = request.data.get("password")
-        display_name = request.data.get("display_name", username)
-        
-        if not username or not password:
-            return Response({"error": "Missing username or password"}, status=400)
-            
-        if User.objects.filter(username=username).exists():
-            return Response({"error": "Username already exists"}, status=400)
-            
-        user = User.objects.create(
-            username=username,
-            password_hash=make_password(password),
-            display_name=display_name,
-            total_score=0,
-            created_at=timezone.now()
+        user, error = register_new_account(
+            username,
+            request.data.get("password"),
+            request.data.get("display_name", username),
         )
+        if error:
+            return Response({"error": error[0]}, status=error[1])
         return Response({"user_id": user.user_id}, status=201)
 
 class LogoutView(APIView):

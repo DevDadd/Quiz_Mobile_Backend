@@ -1,7 +1,7 @@
 from django.db import connection
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from authentication.services import get_auth_session
+from authentication.services import get_all_players, get_auth_session
 
 class OnlinePlayersView(APIView):
 
@@ -26,6 +26,17 @@ class OnlinePlayersView(APIView):
             for d in data:
                 d['total_score'] = float(d['total_score'])
                 
+        return Response(data, status=200)
+
+
+class AllPlayersView(APIView):
+    """Danh sách toàn bộ người chơi (trừ chính mình), không quan tâm online hay không."""
+
+    def get(self, request):
+        user_id, session_id = get_auth_session(request)
+        if not user_id: return Response({"error": "Unauthorized"}, status=401)
+
+        data = get_all_players(user_id)
         return Response(data, status=200)
 
 

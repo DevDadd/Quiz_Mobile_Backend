@@ -5,6 +5,7 @@ from matches.views import (
     ChallengeCancelView,
     ChallengeCreateView,
     ChallengeDetailView,
+    ChallengePendingView,
     ChallengeRejectView,
     MatchAnswersView,
     MatchBotView,
@@ -19,6 +20,7 @@ from matches.views import (
 
 urlpatterns = [
     path('challenges/', ChallengeCreateView.as_view(), name='challenge-create'),
+    path('challenges/pending/', ChallengePendingView.as_view(), name='challenge-pending'),
     path('challenges/<int:id>/', ChallengeDetailView.as_view(), name='challenge-detail'),
     path('challenges/<int:id>/accept/', ChallengeAcceptView.as_view(), name='challenge-accept'),
     path('challenges/<int:id>/reject/', ChallengeRejectView.as_view(), name='challenge-reject'),

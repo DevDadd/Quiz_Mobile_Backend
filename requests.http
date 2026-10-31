@@ -256,6 +256,76 @@ Authorization: {{tokenP1}}
 
 
 ### ========================================================================
+### 5b. LUYỆN TẬP (PRACTICE) - dùng tokenP1
+### ========================================================================
+# Cần có sẵn ít nhất 1 dòng trong practice_sets (+ practice_set_questions) để làm bộ đề.
+# order_index/option_id lấy từ response của "GET .../questions/" ngay phía trên (<-- ĐIỀN TAY).
+
+### Danh sách bộ đề (lọc theo độ khó: ?difficulty=1)
+# @name practiceSets
+GET {{baseUrl}}/practice/sets/
+Authorization: {{tokenP1}}
+
+@practiceSetId = {{practiceSets.response.body.$[0].set_id}}
+
+### Câu hỏi của một bộ đề (không có is_correct)
+GET {{baseUrl}}/practice/sets/{{practiceSetId}}/questions/
+Authorization: {{tokenP1}}
+
+### Bắt đầu phiên luyện tập làm bộ đề (mode: SET | WRONG_REVIEW)
+# @name startPractice
+POST {{baseUrl}}/practice/sessions/
+Authorization: {{tokenP1}}
+Content-Type: application/json
+
+{
+  "mode": "SET",
+  "set_id": {{practiceSetId}}
+}
+
+@practiceId = {{startPractice.response.body.$.practice_id}}
+
+### Lưu tạm đáp án (chưa chấm)
+PUT {{baseUrl}}/practice/sessions/{{practiceId}}/answers/
+Authorization: {{tokenP1}}
+Content-Type: application/json
+
+{
+  "answers": [
+    { "order_index": 0, "selected_option_id": 1, "response_time_ms": 1500 }
+  ]
+}
+
+### Nộp bài: chấm điểm + ghi sổ câu sai + trả kết quả
+POST {{baseUrl}}/practice/sessions/{{practiceId}}/submit/
+Authorization: {{tokenP1}}
+Content-Type: application/json
+
+{
+  "answers": [
+    { "order_index": 1, "selected_option_id": 5, "response_time_ms": 2000 }
+  ]
+}
+
+### Xem kết quả phiên luyện tập
+GET {{baseUrl}}/practice/sessions/{{practiceId}}/result/
+Authorization: {{tokenP1}}
+
+### Sổ câu cần luyện lại (thêm ?include_mastered=1 để xem cả câu đã thuộc)
+GET {{baseUrl}}/practice/wrong-questions/
+Authorization: {{tokenP1}}
+
+### Ôn lại các câu sai
+POST {{baseUrl}}/practice/sessions/
+Authorization: {{tokenP1}}
+Content-Type: application/json
+
+{
+  "mode": "WRONG_REVIEW"
+}
+
+
+### ========================================================================
 ### 6. LOGOUT
 ### ========================================================================
 
