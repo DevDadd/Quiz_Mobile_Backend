@@ -3,8 +3,8 @@ from django.db import connection
 from django.utils import timezone
 from authentication.models import User, UserSession
 
-# --- Users: hàm theo tài liệu phân tích (registerNewAccount, login, getAllPlayers) ---
-# Các hàm trả về (kết quả, lỗi). lỗi là None hoặc (thông báo, http_status).
+# --- Users: hÃ m theo tÃ i liá»‡u phÃ¢n tÃ­ch (registerNewAccount, login, getAllPlayers) ---
+# CÃ¡c hÃ m tráº£ vá» (káº¿t quáº£, lá»—i). lá»—i lÃ  None hoáº·c (thÃ´ng bÃ¡o, http_status).
 
 def register_new_account(username, password, display_name=None):
     """Users.registerNewAccount()"""
@@ -24,7 +24,7 @@ def register_new_account(username, password, display_name=None):
 
 
 def login(username, password):
-    """Users.login(): xác thực rồi tạo/làm mới phiên đăng nhập. Trả về (session, user, lỗi)."""
+    """Users.login(): xÃ¡c thá»±c rá»“i táº¡o/lÃ m má»›i phiÃªn Ä‘Äƒng nháº­p. Tráº£ vá» (session, user, lá»—i)."""
     if not username or not password:
         return None, None, ("Username and password are required.", 400)
 
@@ -50,7 +50,7 @@ def login(username, password):
 
 
 def get_all_players(exclude_user_id):
-    """Users.getAllPlayers(): toàn bộ người chơi trừ chính mình (không phân biệt online)."""
+    """Users.getAllPlayers(): toÃ n bá»™ ngÆ°á»i chÆ¡i trá»« chÃ­nh mÃ¬nh (khÃ´ng phÃ¢n biá»‡t online)."""
     players = User.objects.exclude(user_id=exclude_user_id).order_by('-total_score', 'user_id')
     return [
         {
@@ -62,19 +62,24 @@ def get_all_players(exclude_user_id):
     ]
 
 
-# --- Sessions / Users: hàm nội bộ cho các app khác gọi ---
+# --- Sessions / Users: hÃ m ná»™i bá»™ cho cÃ¡c app khÃ¡c gá»i ---
 
 def get_auth_session(request):
-    """ Tương đương auth.middleware(req) """
-    session_id = request.headers.get('Authorization')
-    if not session_id:
+    """Resolve the active session from user_id without requiring a token.
+
+    Send user_id in the query string for GET requests or JSON body for writes.
+    This identifies a player but does not authenticate them.
+    """
+    data = getattr(request, "data", None)
+    user_id = data.get("user_id") if hasattr(data, "get") else None
+    user_id = user_id or request.query_params.get("user_id")
+    if not user_id:
         return None, None
     try:
-        session = UserSession.objects.get(session_id=session_id)
-        return session.user.user_id, session_id
-    except UserSession.DoesNotExist:
+        session = UserSession.objects.get(user_id=int(user_id))
+        return session.user.user_id, str(session.session_id)
+    except (UserSession.DoesNotExist, TypeError, ValueError):
         return None, None
-
 def is_available(user_id):
     """ presence.isAvailable(userId) -> bool """
     try:
@@ -106,7 +111,7 @@ def set_idle(match_id):
 def update_score(user_id, points):
     """ score.addPoints(tx, userId, points) """
     if user_id is None:
-        return # Skip nếu là bot
+        return # Skip náº¿u lÃ  bot
     with connection.cursor() as cursor:
         cursor.execute("UPDATE users SET total_score = total_score + %s WHERE user_id = %s", [points, user_id])
 

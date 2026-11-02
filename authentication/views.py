@@ -14,9 +14,8 @@ class LoginView(APIView):
 
         return Response(
             {
-                "message": "Đăng nhập thành công",
+                "message": "ÄÄƒng nháº­p thÃ nh cÃ´ng",
                 "data": {
-                    "session_id": str(session.session_id),
                     "user": {
                         "user_id": user.user_id,
                         "username": user.username,
@@ -48,9 +47,9 @@ class LogoutView(APIView):
         user_id, session_id = get_auth_session(request)
         if not session_id: return Response({"error": "Unauthorized"}, status=401)
         
-        # session_status_enum chỉ có idle|busy (không có offline) — "đăng xuất" được biểu diễn
-        # bằng cách đẩy last_heartbeat_at về quá khứ để mọi check "online" (dựa trên heartbeat
-        # gần đây) coi user này là offline ngay lập tức, thay vì chờ 15s hết hạn tự nhiên.
+        # session_status_enum chá»‰ cÃ³ idle|busy (khÃ´ng cÃ³ offline) â€” "Ä‘Äƒng xuáº¥t" Ä‘Æ°á»£c biá»ƒu diá»…n
+        # báº±ng cÃ¡ch Ä‘áº©y last_heartbeat_at vá» quÃ¡ khá»© Ä‘á»ƒ má»i check "online" (dá»±a trÃªn heartbeat
+        # gáº§n Ä‘Ã¢y) coi user nÃ y lÃ  offline ngay láº­p tá»©c, thay vÃ¬ chá» 15s háº¿t háº¡n tá»± nhiÃªn.
         UserSession.objects.filter(session_id=session_id).update(
             status='idle',
             current_match_id=None,
