@@ -6,7 +6,7 @@ from practice import services
 
 
 def _unauthorized():
-    return Response({"error": "Unauthorized"}, status=401)
+    return Response({"error": "user_id is required"}, status=400)
 
 
 def _get_own_session(request, id):
@@ -37,10 +37,6 @@ def _session_payload(session):
 
 class PracticeSetsView(APIView):
     def get(self, request):
-        me, _ = get_auth_session(request)
-        if not me:
-            return _unauthorized()
-
         difficulty = request.query_params.get('difficulty')
         if difficulty in (None, ''):
             difficulty = None
@@ -54,9 +50,6 @@ class PracticeSetsView(APIView):
 
 class PracticeSetQuestionsView(APIView):
     def get(self, request, id):
-        me, _ = get_auth_session(request)
-        if not me:
-            return _unauthorized()
         if not services.get_practice_set(id):
             return Response({"error": "Không tìm thấy bộ đề"}, status=404)
         return Response(services.get_questions(id))

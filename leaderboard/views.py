@@ -7,7 +7,7 @@ class OnlinePlayersView(APIView):
 
     def get(self, request):
         user_id, session_id = get_auth_session(request)
-        if not user_id: return Response({"error": "Unauthorized"}, status=401)
+        if not user_id: return Response({"error": "user_id is required"}, status=400)
         
         with connection.cursor() as cursor:
             query = """
@@ -34,7 +34,7 @@ class AllPlayersView(APIView):
 
     def get(self, request):
         user_id, session_id = get_auth_session(request)
-        if not user_id: return Response({"error": "Unauthorized"}, status=401)
+        if not user_id: return Response({"error": "user_id is required"}, status=400)
 
         data = get_all_players(user_id)
         return Response(data, status=200)

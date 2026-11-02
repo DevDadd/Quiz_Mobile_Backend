@@ -45,7 +45,7 @@ class RegisterView(APIView):
 class LogoutView(APIView):
     def post(self, request):
         user_id, session_id = get_auth_session(request)
-        if not session_id: return Response({"error": "Unauthorized"}, status=401)
+        if not session_id: return Response({"error": "user_id is required"}, status=400)
         
         # session_status_enum chá»‰ cÃ³ idle|busy (khÃ´ng cÃ³ offline) â€” "Ä‘Äƒng xuáº¥t" Ä‘Æ°á»£c biá»ƒu diá»…n
         # báº±ng cÃ¡ch Ä‘áº©y last_heartbeat_at vá» quÃ¡ khá»© Ä‘á»ƒ má»i check "online" (dá»±a trÃªn heartbeat
@@ -61,7 +61,7 @@ class LogoutView(APIView):
 class MeView(APIView):
     def get(self, request):
         user_id, session_id = get_auth_session(request)
-        if not user_id: return Response({"error": "Unauthorized"}, status=401)
+        if not user_id: return Response({"error": "user_id is required"}, status=400)
         
         user = User.objects.get(user_id=user_id)
         return Response({
@@ -75,7 +75,7 @@ class MeView(APIView):
 class HeartbeatView(APIView):
     def post(self, request):
         user_id, session_id = get_auth_session(request)
-        if not session_id: return Response({"error": "Unauthorized"}, status=401)
+        if not session_id: return Response({"error": "user_id is required"}, status=400)
         
         since = request.query_params.get('since', 0)
         try:

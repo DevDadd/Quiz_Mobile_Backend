@@ -26,7 +26,7 @@ CHALLENGE_STATUS_SELF_CANCELLED = 'expired'
 
 
 def _unauthorized():
-    return Response({"error": "Unauthorized"}, status=401)
+    return Response({"error": "user_id is required"}, status=400)
 
 
 def _error_response(error):
