@@ -303,6 +303,7 @@ def calculate_result(practice_id):
         "answered_count": answered,
         "correct_count": correct,
         "wrong_count": answered - correct,
+        "skipped_count": total - answered,
         "total_response_time_ms": int(total_response_time_ms),
     }
 

@@ -145,6 +145,9 @@ class PracticeResultView(APIView):
             return Response({"error": "Chấm điểm trước khi xem kết quả"}, status=409)
 
         result = services.calculate_result(id)
+        result["status"] = session['status']
+        result["mode"] = session['mode']
+        result["answers"] = services.get_result_review(id)
         return Response(result)
 
 
