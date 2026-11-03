@@ -10,11 +10,13 @@ from practice.views import (
     PracticeSetsView,
     PracticeSubmitView,
     WrongQuestionsView,
+    QuestionOptionsView,
 )
 
 urlpatterns = [
     path('sets/', PracticeSetsView.as_view(), name='practice-sets'),
     path('sets/<int:id>/questions/', PracticeSetQuestionsView.as_view(), name='practice-set-questions'),
+    path('questions/<int:question_id>/options/', QuestionOptionsView.as_view(), name='practice-question-options'),
 
     path('sessions/', PracticeSessionCreateView.as_view(), name='practice-session-create'),
     path('sessions/<int:id>/', PracticeSessionDetailView.as_view(), name='practice-session-detail'),

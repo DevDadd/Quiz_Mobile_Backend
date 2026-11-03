@@ -62,7 +62,7 @@ def get_practice_set(set_id):
 
 
 def get_questions(set_id):
-    """Câu hỏi (kèm đáp án, không có is_correct) của một bộ đề, theo order_index."""
+    """Danh sách câu hỏi của một bộ đề, không kèm options."""
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -72,10 +72,13 @@ def get_questions(set_id):
             """,
             [set_id],
         )
-        questions = _rows(cursor)
-        for q in questions:
-            q['options'] = get_options(q['question_id'], cursor)
-    return questions
+        return _rows(cursor)
+
+
+def question_exists(question_id):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1 FROM questions WHERE question_id = %s", [question_id])
+        return cursor.fetchone() is not None
 
 
 def get_options(question_id, cursor=None):

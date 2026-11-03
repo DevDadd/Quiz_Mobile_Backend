@@ -55,6 +55,13 @@ class PracticeSetQuestionsView(APIView):
         return Response(services.get_questions(id))
 
 
+class QuestionOptionsView(APIView):
+    def get(self, request, question_id):
+        if not services.question_exists(question_id):
+            return Response({"error": "Không tìm thấy câu hỏi"}, status=404)
+        return Response(services.get_options(question_id))
+
+
 class PracticeSessionCreateView(APIView):
     def post(self, request):
         me, _ = get_auth_session(request)
