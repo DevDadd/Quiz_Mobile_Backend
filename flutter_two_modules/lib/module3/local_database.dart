@@ -15,13 +15,33 @@ class LocalDatabase {
     final dbPath = path.join(await getDatabasesPath(), 'quiz_bot_local_v1.db');
     final database = await openDatabase(
       dbPath,
-      version: 1,
+      version: 2,
       onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
     _db = database;
     await _seedQuestionBank(database);
     return database;
+  }
+
+  /// v1 -> v2: add the columns of the shared design (Figure 1 / ERD).
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      for (final sql in const [
+        "ALTER TABLE matches ADD COLUMN opponent_type TEXT NOT NULL DEFAULT 'BOT'",
+        'ALTER TABLE matches ADD COLUMN player1_id INTEGER',
+        'ALTER TABLE matches ADD COLUMN player2_id INTEGER',
+        'ALTER TABLE matches ADD COLUMN current_question_index INTEGER NOT NULL DEFAULT 0',
+        'ALTER TABLE matches ADD COLUMN updated_at TEXT',
+        'ALTER TABLE match_questions ADD COLUMN started_at TEXT',
+        'ALTER TABLE match_participants ADD COLUMN user_id INTEGER',
+        'ALTER TABLE match_participants ADD COLUMN submitted_at TEXT',
+        'ALTER TABLE match_answers ADD COLUMN answered_at TEXT',
+      ]) {
+        await db.execute(sql);
+      }
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -46,12 +66,17 @@ class LocalDatabase {
     await db.execute('''
       CREATE TABLE matches (
         match_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        player1_id INTEGER,
+        player2_id INTEGER,
+        opponent_type TEXT NOT NULL DEFAULT 'BOT',
         bot_difficulty TEXT NOT NULL,
         question_count INTEGER NOT NULL,
         time_limit_seconds INTEGER NOT NULL,
+        current_question_index INTEGER NOT NULL DEFAULT 0,
         status TEXT NOT NULL,
         started_at TEXT NOT NULL,
-        ended_at TEXT
+        ended_at TEXT,
+        updated_at TEXT
       )
     ''');
     await db.execute('''
@@ -59,6 +84,7 @@ class LocalDatabase {
         match_id INTEGER NOT NULL,
         order_index INTEGER NOT NULL,
         question_id INTEGER NOT NULL,
+        started_at TEXT,
         PRIMARY KEY(match_id, order_index),
         FOREIGN KEY(match_id) REFERENCES matches(match_id),
         FOREIGN KEY(question_id) REFERENCES questions(question_id)
@@ -68,10 +94,12 @@ class LocalDatabase {
       CREATE TABLE match_participants (
         match_id INTEGER NOT NULL,
         side TEXT NOT NULL,
+        user_id INTEGER,
         result TEXT NOT NULL,
         points_earned REAL NOT NULL,
         correct_count INTEGER NOT NULL,
         duration_seconds INTEGER NOT NULL,
+        submitted_at TEXT,
         PRIMARY KEY(match_id, side),
         FOREIGN KEY(match_id) REFERENCES matches(match_id)
       )
@@ -84,6 +112,7 @@ class LocalDatabase {
         selected_option_id INTEGER,
         is_correct INTEGER NOT NULL,
         response_time_ms INTEGER NOT NULL,
+        answered_at TEXT,
         PRIMARY KEY(match_id, order_index, side),
         FOREIGN KEY(match_id, order_index)
           REFERENCES match_questions(match_id, order_index),

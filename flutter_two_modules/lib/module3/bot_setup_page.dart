@@ -32,7 +32,9 @@ class _BotSetupPageState extends State<BotSetupPage> {
   }
 
   void showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message.replaceFirst(RegExp(r'^(Bad state|Exception): '), '')),
+    ));
   }
 
   @override

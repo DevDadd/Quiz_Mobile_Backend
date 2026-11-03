@@ -32,6 +32,9 @@ class StubMatchDAO extends MatchDAO {
 
   @override
   Future<bool> saveResult(Match match) async => match.status == 'finished';
+
+  @override
+  Future<bool> markAbandoned(Match match) async => match.status == 'abandoned';
 }
 
 void main() {
@@ -55,5 +58,18 @@ void main() {
     expect((first['match'] as Match).player.result, 'win');
     expect(first['saved'], true);
     expect(identical(first, second), true); // idempotent
+  });
+
+  test('M03 thoát giữa trận: lưu abandoned, không chấm điểm, không finish được nữa', () async {
+    final controller = BotGameController(
+      questionDAO: const StubQuestionDAO(),
+      matchDAO: const StubMatchDAO(),
+      random: Random(3),
+    );
+    final match = await controller.startMatch('medium');
+    expect(await controller.abandonMatch(), true);
+    expect(match.status, 'abandoned');
+    expect(match.player.pointsEarned, 0);
+    await expectLater(controller.finishMatch('submit'), throwsA(isA<StateError>()));
   });
 }

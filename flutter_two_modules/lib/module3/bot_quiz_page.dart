@@ -22,6 +22,7 @@ class _BotQuizPageState extends State<BotQuizPage> {
   int current = 0;
   int remaining = 60;
   bool finishing = false;
+  bool _dialogOpen = false;
 
   @override
   void initState() {
@@ -46,7 +47,7 @@ class _BotQuizPageState extends State<BotQuizPage> {
   }
 
   void showQuestions(Match match) {
-    if (mounted) setState(() => current = 0);
+    if (mounted) setState(() { current = 0; match.currentQuestionIndex = 0; });
   }
 
   Future<void> submit() => _finish('submit');
@@ -56,6 +57,7 @@ class _BotQuizPageState extends State<BotQuizPage> {
     if (finishing) return;
     setState(() => finishing = true);
     _timer?.cancel();
+    if (_dialogOpen) Navigator.of(context).pop(false); // close the exit dialog first
     try {
       final result = await widget.controller.finishMatch(reason);
       if (!mounted) return;
@@ -63,14 +65,38 @@ class _BotQuizPageState extends State<BotQuizPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => finishing = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString().replaceFirst(RegExp(r'^(Bad state|Exception): '), '')}')));
     }
   }
 
   Future<void> showResult(Match match, bool saved) async {
     await Navigator.of(context).pushReplacement(MaterialPageRoute(
-      builder: (_) => BotResultPage.showResult(match: match, saved: saved),
+      builder: (_) => BotResultPage.showResult(
+        match: match, saved: saved, retrySave: widget.controller.retrySave),
     ));
+  }
+
+  /// Back pressed mid-match: confirm, then store the match as 'abandoned' (no score).
+  Future<void> _confirmExit() async {
+    if (finishing || _dialogOpen) return;
+    _dialogOpen = true;
+    final leave = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thoát trận đấu?'),
+        content: const Text('Trận đang diễn ra sẽ bị hủy và không được tính điểm.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Ở lại')),
+          FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Thoát')),
+        ],
+      ),
+    );
+    _dialogOpen = false;
+    if (!mounted || finishing || leave != true) return;
+    _timer?.cancel();
+    await widget.controller.abandonMatch();
+    if (mounted) Navigator.of(context).pop();
   }
 
   @override
@@ -84,7 +110,8 @@ class _BotQuizPageState extends State<BotQuizPage> {
     final q = widget.match.questions[current];
     final selected = widget.match.playerAnswers[q.orderIndex]?.selectedOptionId;
     return PopScope(
-      canPop: !finishing,
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) { if (!didPop) _confirmExit(); },
       child: Scaffold(
         appBar: AppBar(title: const Text('Thi đấu với máy')),
         body: Padding(
@@ -111,13 +138,13 @@ class _BotQuizPageState extends State<BotQuizPage> {
               const Spacer(),
               Row(children: [
                 Expanded(child: OutlinedButton(
-                  onPressed: current == 0 || finishing ? null : () => setState(() => current--),
+                  onPressed: current == 0 || finishing ? null : () => setState(() { current--; widget.match.currentQuestionIndex = current; }),
                   child: const Text('Câu trước'),
                 )),
                 const SizedBox(width: 10),
                 Expanded(child: OutlinedButton(
                   onPressed: current >= widget.match.questions.length - 1 || finishing
-                      ? null : () => setState(() => current++),
+                      ? null : () => setState(() { current++; widget.match.currentQuestionIndex = current; }),
                   child: const Text('Câu tiếp'),
                 )),
               ]),

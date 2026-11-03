@@ -32,6 +32,7 @@ class BotGameController {
   Future<Match> startMatch(String difficulty, {
     int questionCount = 10,
     int timeLimitSeconds = 60,
+    int? playerUserId,
   }) async {
     if (!botAccuracy.containsKey(difficulty)) {
       throw ArgumentError.value(difficulty, 'difficulty', 'easy/medium/hard');
@@ -45,6 +46,7 @@ class BotGameController {
       questionCount: questionCount,
       timeLimitSeconds: timeLimitSeconds,
       startedAt: DateTime.now(),
+      playerUserId: playerUserId,
       questions: [
         for (var i = 0; i < questions.length; i++)
           MatchQuestion(orderIndex: i, question: questions[i]),
@@ -67,12 +69,14 @@ class BotGameController {
       final chooseCorrect = random.nextDouble() < accuracy;
       final pool = chooseCorrect || wrong.isEmpty ? correct : wrong;
       final picked = pool[random.nextInt(pool.length)];
+      final responseMs = 500 + random.nextInt(3501);
       match.botAnswers[mq.orderIndex] = MatchAnswer(
         orderIndex: mq.orderIndex,
         side: 'P2',
         selectedOption: picked,
         isCorrect: picked.isCorrect,
-        responseTimeMs: 500 + random.nextInt(3501),
+        responseTimeMs: responseMs,
+        answeredAt: match.startedAt.add(Duration(milliseconds: responseMs)),
       );
     }
     match.bot.correctCount = match.botAnswers.values.where((a) => a.isCorrect).length;
@@ -114,12 +118,16 @@ class BotGameController {
     if (reason != 'submit' && reason != 'timeout') {
       throw ArgumentError.value(reason, 'reason');
     }
-    return _finishFuture ??= _finishMatch(reason);
+    return _finishFuture ??= _finishMatch(reason).catchError((Object e) {
+      _finishFuture = null; // allow a retry after an unexpected failure
+      throw e;
+    });
   }
 
   Future<Map<String, dynamic>> _finishMatch(String reason) async {
     final match = currentMatch;
     if (match == null) throw StateError('Chưa có trận đấu.');
+    if (match.status == 'abandoned') throw StateError('Trận đã bị hủy.');
     final elapsed = DateTime.now().difference(match.startedAt).inMilliseconds;
     match.player.durationSeconds = reason == 'timeout'
         ? match.timeLimitSeconds
@@ -127,9 +135,27 @@ class BotGameController {
     match.player.correctCount = match.playerAnswers.values.where((a) => a.isCorrect).length;
     evaluateOutcome(match);
     match.endedAt = DateTime.now();
+    match.player.submittedAt = match.endedAt;
+    match.bot.submittedAt = match.endedAt;
     match.status = 'finished';
     final saved = await matchDAO.saveResult(match);
     return {'match': match, 'saved': saved};
+  }
+
+  /// Player left the match midway: store status 'abandoned', never score it.
+  Future<bool> abandonMatch() async {
+    final match = currentMatch;
+    if (match == null || match.status != 'ongoing') return false;
+    match.status = 'abandoned';
+    match.endedAt = DateTime.now();
+    return matchDAO.markAbandoned(match);
+  }
+
+  /// Retry saving the result if the first saveResult() returned false.
+  Future<bool> retrySave() async {
+    final match = currentMatch;
+    if (match == null) return false;
+    return matchDAO.saveResult(match);
   }
 
   void evaluateOutcome(Match match) {

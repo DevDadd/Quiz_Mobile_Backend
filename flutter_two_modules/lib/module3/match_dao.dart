@@ -11,24 +11,31 @@ class MatchDAO {
     final db = await LocalDatabase.instance.database;
     return db.transaction((txn) async {
       final id = await txn.insert('matches', {
+        'player1_id': match.playerUserId,
+        'player2_id': null, // BOT side has no account
+        'opponent_type': match.opponentType,
         'bot_difficulty': match.botDifficulty,
         'question_count': match.questionCount,
         'time_limit_seconds': match.timeLimitSeconds,
+        'current_question_index': match.currentQuestionIndex,
         'status': match.status,
         'started_at': match.startedAt.toUtc().toIso8601String(),
         'ended_at': null,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
       for (final mq in match.questions) {
         await txn.insert('match_questions', {
           'match_id': id,
           'order_index': mq.orderIndex,
           'question_id': mq.question.questionId,
+          'started_at': match.startedAt.toUtc().toIso8601String(),
         });
       }
       for (final side in ['P1', 'P2']) {
         await txn.insert('match_participants', {
           'match_id': id,
           'side': side,
+          'user_id': side == 'P1' ? match.playerUserId : null,
           'result': 'draw',
           'points_earned': 0.0,
           'correct_count': 0,
@@ -52,6 +59,8 @@ class MatchDAO {
         final count = await txn.update('matches', {
           'status': 'finished',
           'ended_at': match.endedAt!.toUtc().toIso8601String(),
+          'current_question_index': match.currentQuestionIndex,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
         }, where: 'match_id = ?', whereArgs: [id]);
         if (count != 1) throw StateError('Trận đấu không tồn tại.');
 
@@ -61,6 +70,7 @@ class MatchDAO {
             'points_earned': participant.pointsEarned,
             'correct_count': participant.correctCount,
             'duration_seconds': participant.durationSeconds,
+            'submitted_at': participant.submittedAt?.toUtc().toIso8601String(),
           }, where: 'match_id = ? AND side = ?', whereArgs: [id, participant.side]);
         }
         for (final mq in match.questions) {
@@ -75,11 +85,30 @@ class MatchDAO {
               'selected_option_id': answer?.selectedOptionId,
               'is_correct': answer?.isCorrect == true ? 1 : 0,
               'response_time_ms': answer?.responseTimeMs ?? 0,
+              'answered_at': answer?.answeredAt.toUtc().toIso8601String(),
             }, conflictAlgorithm: ConflictAlgorithm.replace);
           }
         }
       });
       return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Marks a match that the player left midway. No scoring, no participant result.
+  Future<bool> markAbandoned(Match match) async {
+    final id = match.localMatchId;
+    if (id == null) return false;
+    try {
+      final db = await LocalDatabase.instance.database;
+      final count = await db.update('matches', {
+        'status': 'abandoned',
+        'ended_at': (match.endedAt ?? DateTime.now()).toUtc().toIso8601String(),
+        'current_question_index': match.currentQuestionIndex,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }, where: 'match_id = ? AND status = ?', whereArgs: [id, 'ongoing']);
+      return count == 1;
     } catch (_) {
       return false;
     }
@@ -123,8 +152,10 @@ class MatchDAO {
       timeLimitSeconds: row['time_limit_seconds'] as int,
       startedAt: DateTime.parse(row['started_at'] as String),
       questions: items,
+      playerUserId: row['player1_id'] as int?,
     );
     match.localMatchId = id;
+    match.currentQuestionIndex = (row['current_question_index'] as int?) ?? 0;
     match.status = row['status'] as String;
     if (row['ended_at'] != null) {
       match.endedAt = DateTime.parse(row['ended_at'] as String);
@@ -137,6 +168,9 @@ class MatchDAO {
       part.pointsEarned = (p['points_earned'] as num).toDouble();
       part.correctCount = p['correct_count'] as int;
       part.durationSeconds = p['duration_seconds'] as int;
+      if (p['submitted_at'] != null) {
+        part.submittedAt = DateTime.parse(p['submitted_at'] as String);
+      }
     }
     final answers = await db.query('match_answers',
         where: 'match_id = ?', whereArgs: [id]);
@@ -152,6 +186,8 @@ class MatchDAO {
                 .firstWhere((opt) => opt.optionId == a['selected_option_id']),
         isCorrect: a['is_correct'] == 1,
         responseTimeMs: a['response_time_ms'] as int,
+        answeredAt: a['answered_at'] == null
+            ? null : DateTime.parse(a['answered_at'] as String),
       );
       (answer.side == 'P1' ? match.playerAnswers : match.botAnswers)[answer.orderIndex] = answer;
     }

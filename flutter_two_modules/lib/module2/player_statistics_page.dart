@@ -3,46 +3,50 @@ import 'package:flutter/material.dart';
 import 'leaderboard_api.dart';
 import 'match_history_page.dart';
 
+/// M02-B: player statistics (GD02 middle screen).
 class PlayerStatisticsPage extends StatefulWidget {
   final LeaderboardApi api;
-  final int playerId;
+  final int userId;
   final String name;
 
   const PlayerStatisticsPage({super.key, required this.api,
-    required this.playerId, required this.name});
+    required this.userId, required this.name});
 
   @override
   State<PlayerStatisticsPage> createState() => _PlayerStatisticsPageState();
 }
 
 class _PlayerStatisticsPageState extends State<PlayerStatisticsPage> {
-  Map<String, dynamic>? stats;
+  // Attributes named as in Figure 5.
+  int get userId => widget.userId;
+  Map<String, dynamic>? outStatistics;
   String? error;
 
   @override
-  void initState() { super.initState(); load(); }
+  void initState() { super.initState(); load(userId); }
 
-  Future<void> load() async {
-    setState(() { error = null; stats = null; });
+  Future<void> load(int id) async {
+    setState(() { error = null; outStatistics = null; });
     try {
-      final result = await widget.api.getStats(widget.playerId);
+      final result = await widget.api.getStats(id);
       showStats(result);
     } catch (e) {
-      showError(e.toString());
+      showError(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
-  void showStats(Map<String, dynamic> newStats) {
-    if (mounted) setState(() => stats = newStats);
+  void showStats(Map<String, dynamic> stats) {
+    if (mounted) setState(() => outStatistics = stats);
   }
 
   void openHistory() {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => MatchHistoryPage(
-        api: widget.api, playerId: widget.playerId, name: widget.name),
+        api: widget.api, userId: userId, name: widget.name),
     ));
   }
 
+  /// Back to the leaderboard.
   void back() => Navigator.of(context).pop();
 
   void showError(String text) {
@@ -51,24 +55,32 @@ class _PlayerStatisticsPageState extends State<PlayerStatisticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final values = stats;
+    final values = outStatistics;
     return Scaffold(
-      appBar: AppBar(title: Text('Thống kê: ${widget.name}')),
+      appBar: AppBar(title: const Text('THỐNG KÊ NGƯỜI CHƠI')),
       body: Padding(padding: const EdgeInsets.all(18),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text('Người chơi: ${widget.name}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
           if (values == null && error == null) const Center(child: CircularProgressIndicator()),
-          if (error != null) Text('Không lấy được thống kê: $error'),
-          if (values != null) ...[
+          if (error != null) Text('Không lấy được thông tin người chơi: $error'),
+          if (values != null)
             for (final entry in <String, dynamic>{
-              'Tổng số trận': values['played'],
+              'Số trận': values['played'],
               'Thắng': values['win'],
               'Hòa': values['draw'],
               'Thua': values['lose'],
-              'TB thời gian thắng (giây)': values['avg_win_time'],
+              'TG thắng trung bình (giây)': values['avg_win_time'],
             }.entries)
               ListTile(title: Text(entry.key), trailing: Text('${entry.value}')),
-            FilledButton(onPressed: openHistory, child: const Text('Xem lịch sử thi đấu')),
-          ],
+          const Spacer(),
+          FilledButton(
+            onPressed: values == null ? null : openHistory,
+            child: const Text('Xem lịch sử'),
+          ),
+          const SizedBox(height: 8),
+          FilledButton(onPressed: back, child: const Text('Trở lại bảng xếp hạng')),
         ]),
       ),
     );

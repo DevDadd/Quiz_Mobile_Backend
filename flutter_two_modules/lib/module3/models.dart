@@ -44,14 +44,16 @@ class MatchAnswer {
   int? get selectedOptionId => selectedOption?.optionId;
   final bool isCorrect;
   final int responseTimeMs;
+  final DateTime answeredAt;
 
-  const MatchAnswer({
+  MatchAnswer({
     required this.orderIndex,
     required this.side,
     required this.selectedOption,
     required this.isCorrect,
     required this.responseTimeMs,
-  });
+    DateTime? answeredAt,
+  }) : answeredAt = answeredAt ?? DateTime.now();
 }
 
 class MatchParticipant {
@@ -60,18 +62,24 @@ class MatchParticipant {
   double pointsEarned = 0;
   int correctCount = 0;
   int durationSeconds = 0;
+  /// users.user_id of the logged-in player for P1; null for the BOT side.
+  int? userId;
+  DateTime? submittedAt;
 
-  MatchParticipant(this.side);
+  MatchParticipant(this.side, {this.userId});
 }
 
 class Match {
   int? localMatchId;
+  final String opponentType = 'BOT';
+  int currentQuestionIndex = 0;
   final String botDifficulty;
   final int questionCount;
   final int timeLimitSeconds;
   final DateTime startedAt;
   final List<MatchQuestion> questions;
-  final MatchParticipant player = MatchParticipant('P1');
+  final int? playerUserId;
+  late final MatchParticipant player = MatchParticipant('P1', userId: playerUserId);
   final MatchParticipant bot = MatchParticipant('P2');
   List<MatchParticipant> get participants => [player, bot];
   final Map<int, MatchAnswer> playerAnswers = {};
@@ -85,6 +93,7 @@ class Match {
     required this.timeLimitSeconds,
     required this.startedAt,
     required this.questions,
+    this.playerUserId,
   });
 }
 

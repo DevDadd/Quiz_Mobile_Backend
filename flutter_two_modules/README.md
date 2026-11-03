@@ -59,3 +59,10 @@ Demo `main.dart` chỉ có hai nút **M02 / M03**; đây là màn hình mở mod
 | Hình 8: start → pick → generate bot → create → choose → submit/timeout → score → save → show result | `lib/module3/bot_game_controller.dart` và các Page |
 
 **Không chỉnh bất kỳ nội dung nào của PDF thiết kế, không viết lại sơ đồ M01.**
+
+## Cập nhật đồng bộ với báo cáo (lần 2)
+
+- **M02 backend:** 3 API `leaderboard`, `users/{id}/stats`, `users/{id}/matches` nay yêu cầu header `Authorization: <session_id>` (401 nếu thiếu) đúng Precondition "đã đăng nhập". Khi chạy demo cần `--dart-define=SESSION_ID=<session_id>`. Id người chơi không tồn tại → 404 (Exception 4). "TB thời gian thắng" ở thống kê tính cùng cơ sở với bảng xếp hạng (trận HUMAN đã kết thúc). Đối thủ không có display_name hiện username; chỉ khi không có user mới hiện "BOT".
+- **M02 Flutter:** tên thuộc tính/chữ ký hàm theo Hình 5 (`userId`, `inLimit`, `inOffset`, `outRanking`, `outStatistics`, `outHistory`, `load(id)`, `load(id, limit, offset)`); thêm nút theo GD02: Chọn người chơi, Tải lại, Trang trước/sau, Trang chủ, Xem lịch sử, Trở lại bảng xếp hạng, Trở lại thống kê.
+- **M03:** SQLite cục bộ lên version 2 (tự nâng cấp từ v1) với đủ cột theo Hình 1/ERD: `player1_id`, `player2_id`, `opponent_type`, `current_question_index`, `updated_at`, `match_questions.started_at`, `match_participants.user_id/submitted_at`, `match_answers.answered_at`. `startMatch(difficulty, playerUserId: ...)` nhận id người chơi đang đăng nhập (tùy chọn). Màn kết quả có thêm nút "Trang chủ", điểm hiển thị "+1" / "+0.5", thông báo lỗi không còn tiền tố "Bad state:". `finishMatch` có thể gọi lại nếu lần đầu lỗi bất ngờ.
+- **M03 thoát giữa trận:** bấm Back khi đang làm bài sẽ hiện hộp xác nhận; chọn "Thoát" thì trận được lưu `status = 'abandoned'` trong SQLite, không chấm điểm, không cộng điểm. Màn kết quả có nút "Thử lưu lại" nếu lần lưu đầu thất bại.
