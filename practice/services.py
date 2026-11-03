@@ -253,7 +253,6 @@ def grade_session(practice_id, user_id):
 
 def record_session_wrong(practice_id, user_id):
     """Record graded items once; the event table makes this endpoint safe to retry."""
-    recorded = 0
     with transaction.atomic():
         session = get_session(practice_id, for_update=True)
         if not session or session['status'] == STATUS_ONGOING:
@@ -274,8 +273,7 @@ def record_session_wrong(practice_id, user_id):
                 )
                 if cursor.fetchone():
                     record_wrong(user_id, question_id, is_correct)
-                    recorded += 1
-    return {"recorded": recorded}
+    return True
 
 
 def has_ungraded_answers(practice_id):
