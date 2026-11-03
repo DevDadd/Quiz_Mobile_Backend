@@ -1,6 +1,20 @@
 from django.db import connection
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+
+def _pagination(request, default_limit):
+    """Return (limit, offset, error_response). Invalid query inputs must not yield HTTP 500."""
+    try:
+        limit = int(request.query_params.get("limit", default_limit))
+        offset = int(request.query_params.get("offset", 0))
+    except (TypeError, ValueError):
+        return None, None, Response({"error": "limit and offset must be integers"}, status=400)
+    if not 1 <= limit <= 100 or offset < 0:
+        return None, None, Response({"error": "limit must be 1..100 and offset >= 0"}, status=400)
+    return limit, offset, None
+
+
 from authentication.services import get_all_players, get_auth_session
 
 class OnlinePlayersView(APIView):
@@ -43,11 +57,12 @@ class AllPlayersView(APIView):
 class LeaderboardView(APIView):
 
     def get(self, request):
-        limit = int(request.query_params.get('limit', 50))
-        offset = int(request.query_params.get('offset', 0))
+        limit, offset, error = _pagination(request, 50)
+        if error is not None:
+            return error
         
         with connection.cursor() as cursor:
-            # Query chuẩn xác 100% từ PDF trang 3
+            # Sort by the three specification criteria, then by stable user_id.
             query = """
             WITH pvp AS (
                 SELECT mp.user_id, mp.result, mp.duration_seconds, opp.user_id AS opp_id
@@ -63,7 +78,8 @@ class LeaderboardView(APIView):
             LEFT JOIN pvp p ON p.user_id = u.user_id
             LEFT JOIN users ou ON ou.user_id = p.opp_id
             GROUP BY u.user_id, u.display_name, u.total_score
-            ORDER BY u.total_score DESC, avg_opp_score DESC NULLS LAST, avg_win_time ASC NULLS LAST
+            ORDER BY u.total_score DESC, avg_opp_score DESC NULLS LAST,
+                     avg_win_time ASC NULLS LAST, u.user_id ASC
             LIMIT %s OFFSET %s
             """
             cursor.execute(query, [limit, offset])
@@ -73,8 +89,8 @@ class LeaderboardView(APIView):
                 d = dict(zip(columns, row))
                 d['rank'] = offset + i + 1
                 d['total_score'] = float(d['total_score'])
-                d['avg_opp_score'] = float(d['avg_opp_score']) if d['avg_opp_score'] else 0.0
-                d['avg_win_time'] = float(d['avg_win_time']) if d['avg_win_time'] else 0.0
+                d['avg_opp_score'] = float(d['avg_opp_score']) if d['avg_opp_score'] is not None else 0.0
+                d['avg_win_time'] = float(d['avg_win_time']) if d['avg_win_time'] is not None else 0.0
                 data.append(d)
                 
         return Response(data, status=200)
@@ -87,12 +103,13 @@ class UserStatsView(APIView):
             query = """
             SELECT 
               count(*) as played,
-              count(*) FILTER (WHERE result = 'win') as win,
-              count(*) FILTER (WHERE result = 'draw') as draw,
-              count(*) FILTER (WHERE result = 'lose') as lose,
-              AVG(duration_seconds) FILTER (WHERE result = 'win') as avg_win_time
-            FROM match_participants
-            WHERE user_id = %s
+              count(*) FILTER (WHERE mp.result = 'win') as win,
+              count(*) FILTER (WHERE mp.result = 'draw') as draw,
+              count(*) FILTER (WHERE mp.result = 'lose') as lose,
+              AVG(mp.duration_seconds) FILTER (WHERE mp.result = 'win') as avg_win_time
+            FROM match_participants mp
+            JOIN matches m ON m.match_id = mp.match_id AND m.status = 'finished'
+            WHERE mp.user_id = %s
             """
             cursor.execute(query, [id])
             row = cursor.fetchone()
@@ -109,8 +126,9 @@ class UserStatsView(APIView):
 class UserMatchesView(APIView):
 
     def get(self, request, id):
-        limit = int(request.query_params.get('limit', 20))
-        offset = int(request.query_params.get('offset', 0))
+        limit, offset, error = _pagination(request, 20)
+        if error is not None:
+            return error
         
         with connection.cursor() as cursor:
             query = """
@@ -118,7 +136,7 @@ class UserMatchesView(APIView):
                    COALESCE(opp_user.display_name, 'BOT') as opponent_name, 
                    mp.result, mp.points_earned, mp.correct_count, mp.duration_seconds, m.ended_at
             FROM match_participants mp
-            JOIN matches m ON m.match_id = mp.match_id
+            JOIN matches m ON m.match_id = mp.match_id AND m.status = 'finished'
             LEFT JOIN match_participants opp ON opp.match_id = m.match_id AND opp.side <> mp.side
             LEFT JOIN users opp_user ON opp_user.user_id = opp.user_id
             WHERE mp.user_id = %s
@@ -132,4 +150,3 @@ class UserMatchesView(APIView):
                 d['points_earned'] = float(d['points_earned'])
                 
         return Response(data, status=200)
-
