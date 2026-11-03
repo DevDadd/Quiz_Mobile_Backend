@@ -1,15 +1,16 @@
 from django.urls import path
 
 from practice.views import (
-    PracticeAnswersView,
     PracticeQuestionsView,
     PracticeResultView,
     PracticeSessionCreateView,
     PracticeSessionDetailView,
+    PracticeGradeView,
     PracticeSetQuestionsView,
     PracticeSetsView,
     PracticeSubmitView,
     WrongQuestionsView,
+    WrongQuestionRecordView,
     QuestionOptionsView,
 )
 
@@ -21,8 +22,9 @@ urlpatterns = [
     path('sessions/', PracticeSessionCreateView.as_view(), name='practice-session-create'),
     path('sessions/<int:id>/', PracticeSessionDetailView.as_view(), name='practice-session-detail'),
     path('sessions/<int:id>/questions/', PracticeQuestionsView.as_view(), name='practice-session-questions'),
-    path('sessions/<int:id>/answers/', PracticeAnswersView.as_view(), name='practice-session-answers'),
     path('sessions/<int:id>/submit/', PracticeSubmitView.as_view(), name='practice-session-submit'),
+    path('sessions/<int:id>/grade/', PracticeGradeView.as_view(), name='practice-session-grade'),
+    path('sessions/<int:id>/record-wrong/', WrongQuestionRecordView.as_view(), name='practice-session-record-wrong'),
     path('sessions/<int:id>/result/', PracticeResultView.as_view(), name='practice-session-result'),
 
     path('wrong-questions/', WrongQuestionsView.as_view(), name='practice-wrong-questions'),

@@ -279,24 +279,14 @@ Authorization: {{tokenP1}}
 Content-Type: application/json
 
 {
+  "user_id": {{userId1}},
   "mode": "SET",
   "set_id": {{practiceSetId}}
 }
 
-@practiceId = {{startPractice.response.body.$.practice_id}}
+@practiceId = {{startPractice.response.headers.X-Practice-Id}}
 
-### Lưu tạm đáp án (chưa chấm)
-PUT {{baseUrl}}/practice/sessions/{{practiceId}}/answers/
-Authorization: {{tokenP1}}
-Content-Type: application/json
-
-{
-  "answers": [
-    { "order_index": 0, "selected_option_id": 1, "response_time_ms": 1500 }
-  ]
-}
-
-### Nộp bài: chấm điểm + ghi sổ câu sai + trả kết quả
+### Submit final answers
 POST {{baseUrl}}/practice/sessions/{{practiceId}}/submit/
 Authorization: {{tokenP1}}
 Content-Type: application/json
@@ -307,12 +297,20 @@ Content-Type: application/json
   ]
 }
 
-### Xem kết quả phiên luyện tập
+### Grade session answers
+POST {{baseUrl}}/practice/sessions/{{practiceId}}/grade/
+Authorization: {{tokenP1}}
+
+### View practice session result
 GET {{baseUrl}}/practice/sessions/{{practiceId}}/result/
 Authorization: {{tokenP1}}
 
+### Record wrong question results
+POST {{baseUrl}}/practice/sessions/{{practiceId}}/record-wrong/
+Authorization: {{tokenP1}}
+
 ### Sổ câu cần luyện lại (thêm ?include_mastered=1 để xem cả câu đã thuộc)
-GET {{baseUrl}}/practice/wrong-questions/
+GET {{baseUrl}}/practice/wrong-questions/?user_id={{userId1}}
 Authorization: {{tokenP1}}
 
 ### Ôn lại các câu sai
@@ -321,6 +319,7 @@ Authorization: {{tokenP1}}
 Content-Type: application/json
 
 {
+  "user_id": {{userId1}},
   "mode": "WRONG_REVIEW"
 }
 

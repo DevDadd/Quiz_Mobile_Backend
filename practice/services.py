@@ -121,8 +121,7 @@ def time_remaining_ms(session):
 
 
 def start_session(user_id, mode, set_id=None, time_limit_seconds=None):
-    """Tạo phiên luyện tập + các practice_items rỗng (selected_option_id/is_correct NULL).
-    Trả về (practice_id, error). error là (thông báo, http_status) hoặc None."""
+    """Create a practice session and snapshot its question items."""
     if mode not in MODES:
         return None, ("mode không hợp lệ (SET hoặc WRONG_REVIEW)", 400)
 
@@ -150,14 +149,13 @@ def start_session(user_id, mode, set_id=None, time_limit_seconds=None):
                 """,
                 [user_id, WRONG_REVIEW_QUESTION_COUNT],
             )
-            questions = [(i, r[0]) for i, r in enumerate(cursor.fetchall())]
+            questions = [(i, row[0]) for i, row in enumerate(cursor.fetchall())]
             if not questions:
                 return None, ("Không có câu sai nào để ôn luyện", 400)
 
         if time_limit_seconds is None:
             time_limit_seconds = DEFAULT_TIME_LIMIT_SECONDS
 
-        # Mỗi người chỉ có 1 phiên đang làm: các phiên cũ chưa nộp được đánh dấu bỏ dở.
         cursor.execute(
             "UPDATE practice_sessions SET status = %s, ended_at = now() WHERE user_id = %s AND status = %s",
             [STATUS_ABANDONED, user_id, STATUS_ONGOING],
@@ -218,36 +216,79 @@ def save_answers(practice_id, answers):
 
 
 def submit(practice_id, user_id, answers=None):
-    """Nộp bài: lưu đáp án gửi kèm, chấm từng câu (grade), ghi sổ câu sai (record_wrong), đóng phiên.
-    Gọi lại khi phiên đã đóng thì chỉ trả lại kết quả cũ."""
+    """Save final answers and close the session; grading and wrong recording are separate steps."""
     with transaction.atomic():
         session = get_session(practice_id, for_update=True)
-        if not session or session['status'] != STATUS_ONGOING:
-            return calculate_result(practice_id)
-
+        if not session:
+            return {"submitted": False}
+        if session['status'] != STATUS_ONGOING:
+            return {"submitted": False, "status": session['status']}
         if answers:
             save_answers(practice_id, answers)
-
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT order_index, question_id, selected_option_id, response_time_ms "
-                "FROM practice_items WHERE practice_id = %s",
-                [practice_id],
-            )
-            items = cursor.fetchall()
-
-        for order_index, question_id, selected_option_id, response_time_ms in items:
-            if selected_option_id is None:
-                continue  # câu bỏ qua: không tính đúng/sai, không vào sổ câu sai
-            is_correct = grade(practice_id, user_id, order_index, question_id, selected_option_id, response_time_ms)
-            record_wrong(user_id, question_id, is_correct)
-
         with connection.cursor() as cursor:
             cursor.execute(
                 "UPDATE practice_sessions SET status = %s, ended_at = now() WHERE practice_id = %s",
                 [STATUS_FINISHED, practice_id],
             )
-    return calculate_result(practice_id)
+    return {"submitted": True, "status": STATUS_FINISHED}
+
+
+def grade_session(practice_id, user_id):
+    """Grade answered items that have not been graded yet."""
+    processed = 0
+    with transaction.atomic():
+        session = get_session(practice_id, for_update=True)
+        if not session or session['status'] == STATUS_ONGOING:
+            return None
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT order_index, question_id, selected_option_id, response_time_ms "
+                "FROM practice_items WHERE practice_id = %s "
+                "AND selected_option_id IS NOT NULL AND is_correct IS NULL ORDER BY order_index",
+                [practice_id],
+            )
+            items = cursor.fetchall()
+        for order_index, question_id, selected_option_id, response_time_ms in items:
+            grade(practice_id, user_id, order_index, question_id, selected_option_id, response_time_ms)
+            processed += 1
+    return {"graded": processed}
+
+
+def record_session_wrong(practice_id, user_id):
+    """Record graded items once; the event table makes this endpoint safe to retry."""
+    recorded = 0
+    with transaction.atomic():
+        session = get_session(practice_id, for_update=True)
+        if not session or session['status'] == STATUS_ONGOING:
+            return None
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT order_index, question_id, is_correct FROM practice_items "
+                "WHERE practice_id = %s AND selected_option_id IS NOT NULL "
+                "AND is_correct IS NOT NULL ORDER BY order_index",
+                [practice_id],
+            )
+            items = cursor.fetchall()
+            for order_index, question_id, is_correct in items:
+                cursor.execute(
+                    "INSERT INTO practice_item_record_events (practice_id, order_index) "
+                    "VALUES (%s, %s) ON CONFLICT DO NOTHING RETURNING practice_id",
+                    [practice_id, order_index],
+                )
+                if cursor.fetchone():
+                    record_wrong(user_id, question_id, is_correct)
+                    recorded += 1
+    return {"recorded": recorded}
+
+
+def has_ungraded_answers(practice_id):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT EXISTS (SELECT 1 FROM practice_items WHERE practice_id = %s "
+            "AND selected_option_id IS NOT NULL AND is_correct IS NULL)",
+            [practice_id],
+        )
+        return cursor.fetchone()[0]
 
 
 def calculate_result(practice_id):

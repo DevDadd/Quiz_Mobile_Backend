@@ -1,25 +1,15 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from authentication.services import get_auth_session
 from practice import services
-
-
-def _unauthorized():
-    return Response({"error": "user_id is required"}, status=400)
 
 
 def _get_own_session(request, id):
     """Trả về (me, session, error_response). Tự nộp bài nếu phiên đã hết giờ (timeout lazy)."""
-    me, _ = get_auth_session(request)
-    if not me:
-        return None, None, _unauthorized()
     session = services.resolve_if_expired(id)
     if not session:
         return None, None, Response({"error": "Không tìm thấy"}, status=404)
-    if session['user_id'] != me:
-        return None, None, Response({"error": "Forbidden"}, status=403)
-    return me, session, None
+    return session['user_id'], session, None
 
 
 def _session_payload(session):
@@ -64,11 +54,14 @@ class QuestionOptionsView(APIView):
 
 class PracticeSessionCreateView(APIView):
     def post(self, request):
-        me, _ = get_auth_session(request)
-        if not me:
-            return _unauthorized()
-
         mode = request.data.get('mode', services.MODE_SET)
+        me = request.data.get('user_id')
+        try:
+            me = int(me) if me is not None else None
+        except (TypeError, ValueError):
+            return Response({"error": "user_id không hợp lệ"}, status=400)
+        if me is None:
+            return Response({"error": "user_id is required"}, status=400)
         set_id = request.data.get('set_id')
         time_limit_seconds = request.data.get('time_limit_seconds')
         try:
@@ -83,10 +76,13 @@ class PracticeSessionCreateView(APIView):
         if error:
             return Response({"error": error[0]}, status=error[1])
 
-        session = services.get_session(practice_id)
-        payload = _session_payload(session)
-        payload["questions"] = services.get_session_questions(practice_id)
-        return Response(payload, status=201)
+        return Response(
+            status=201,
+            headers={
+                "Location": f"/practice/sessions/{practice_id}/",
+                "X-Practice-Id": str(practice_id),
+            },
+        )
 
 
 class PracticeSessionDetailView(APIView):
@@ -105,18 +101,6 @@ class PracticeQuestionsView(APIView):
         return Response(services.get_session_questions(id))
 
 
-class PracticeAnswersView(APIView):
-    def put(self, request, id):
-        _, session, error = _get_own_session(request, id)
-        if error:
-            return error
-        if session['status'] != services.STATUS_ONGOING:
-            return Response({"saved": 0, "error": "Phiên luyện tập đã kết thúc"}, status=400)
-
-        answers = request.data if isinstance(request.data, list) else request.data.get('answers', [])
-        return Response({"saved": services.save_answers(id, answers)})
-
-
 class PracticeSubmitView(APIView):
     def post(self, request, id):
         me, session, error = _get_own_session(request, id)
@@ -124,8 +108,34 @@ class PracticeSubmitView(APIView):
             return error
 
         answers = request.data if isinstance(request.data, list) else request.data.get('answers', [])
-        result = services.submit(id, me, answers)
-        result["answers"] = services.get_result_review(id)
+        return Response(services.submit(id, me, answers))
+
+
+class PracticeGradeView(APIView):
+    def post(self, request, id):
+        me, session, error = _get_own_session(request, id)
+        if error:
+            return error
+        if session['status'] == services.STATUS_ONGOING:
+            return Response({"error": "Nộp bài trước khi chấm điểm"}, status=409)
+        result = services.grade_session(id, me)
+        if result is None:
+            return Response({"error": "Không thể chấm session này"}, status=404)
+        return Response(result)
+
+
+class WrongQuestionRecordView(APIView):
+    def post(self, request, id):
+        me, session, error = _get_own_session(request, id)
+        if error:
+            return error
+        if session['status'] == services.STATUS_ONGOING:
+            return Response({"error": "Nộp bài trước khi ghi câu sai"}, status=409)
+        if services.has_ungraded_answers(id):
+            return Response({"error": "Chấm điểm trước khi ghi câu sai"}, status=409)
+        result = services.record_session_wrong(id, me)
+        if result is None:
+            return Response({"error": "Không thể ghi câu sai của session này"}, status=404)
         return Response(result)
 
 
@@ -136,6 +146,8 @@ class PracticeResultView(APIView):
             return error
         if session['status'] == services.STATUS_ONGOING:
             return Response({"error": "Phiên luyện tập chưa kết thúc", "status": session['status']}, status=409)
+        if services.has_ungraded_answers(id):
+            return Response({"error": "Chấm điểm trước khi xem kết quả"}, status=409)
 
         result = services.calculate_result(id)
         result["status"] = session['status']
@@ -146,8 +158,12 @@ class PracticeResultView(APIView):
 
 class WrongQuestionsView(APIView):
     def get(self, request):
-        me, _ = get_auth_session(request)
-        if not me:
-            return _unauthorized()
+        me = request.query_params.get('user_id')
+        try:
+            me = int(me) if me is not None else None
+        except (TypeError, ValueError):
+            return Response({"error": "user_id không hợp lệ"}, status=400)
+        if me is None:
+            return Response({"error": "user_id is required"}, status=400)
         include_mastered = request.query_params.get('include_mastered') in ('1', 'true', 'True')
         return Response(services.get_wrong_questions(me, include_mastered))
