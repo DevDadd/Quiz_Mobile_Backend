@@ -1,0 +1,866 @@
+[
+  {
+    "question_id": 1,
+    "content": "5 + 4 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "12",
+        "is_correct": false
+      },
+      {
+        "content": "9",
+        "is_correct": true
+      },
+      {
+        "content": "8",
+        "is_correct": false
+      },
+      {
+        "content": "10",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 2,
+    "content": "7 + 7 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "17",
+        "is_correct": false
+      },
+      {
+        "content": "13",
+        "is_correct": false
+      },
+      {
+        "content": "14",
+        "is_correct": true
+      },
+      {
+        "content": "15",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 3,
+    "content": "9 + 10 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "18",
+        "is_correct": false
+      },
+      {
+        "content": "19",
+        "is_correct": true
+      },
+      {
+        "content": "22",
+        "is_correct": false
+      },
+      {
+        "content": "20",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 4,
+    "content": "11 + 2 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "12",
+        "is_correct": false
+      },
+      {
+        "content": "16",
+        "is_correct": false
+      },
+      {
+        "content": "13",
+        "is_correct": true
+      },
+      {
+        "content": "14",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 5,
+    "content": "13 + 5 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "18",
+        "is_correct": true
+      },
+      {
+        "content": "17",
+        "is_correct": false
+      },
+      {
+        "content": "19",
+        "is_correct": false
+      },
+      {
+        "content": "21",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 6,
+    "content": "15 + 8 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "22",
+        "is_correct": false
+      },
+      {
+        "content": "26",
+        "is_correct": false
+      },
+      {
+        "content": "23",
+        "is_correct": true
+      },
+      {
+        "content": "24",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 7,
+    "content": "17 + 11 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "28",
+        "is_correct": true
+      },
+      {
+        "content": "27",
+        "is_correct": false
+      },
+      {
+        "content": "29",
+        "is_correct": false
+      },
+      {
+        "content": "31",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 8,
+    "content": "19 + 3 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "25",
+        "is_correct": false
+      },
+      {
+        "content": "21",
+        "is_correct": false
+      },
+      {
+        "content": "23",
+        "is_correct": false
+      },
+      {
+        "content": "22",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 9,
+    "content": "21 + 6 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "28",
+        "is_correct": false
+      },
+      {
+        "content": "30",
+        "is_correct": false
+      },
+      {
+        "content": "26",
+        "is_correct": false
+      },
+      {
+        "content": "27",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 10,
+    "content": "4 + 9 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "12",
+        "is_correct": false
+      },
+      {
+        "content": "13",
+        "is_correct": true
+      },
+      {
+        "content": "16",
+        "is_correct": false
+      },
+      {
+        "content": "14",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 11,
+    "content": "6 + 1 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "8",
+        "is_correct": false
+      },
+      {
+        "content": "10",
+        "is_correct": false
+      },
+      {
+        "content": "7",
+        "is_correct": true
+      },
+      {
+        "content": "6",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 12,
+    "content": "8 + 4 = ?",
+    "category": "Toán học",
+    "difficulty": "easy",
+    "options": [
+      {
+        "content": "12",
+        "is_correct": true
+      },
+      {
+        "content": "11",
+        "is_correct": false
+      },
+      {
+        "content": "15",
+        "is_correct": false
+      },
+      {
+        "content": "13",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 13,
+    "content": "12 × 5 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "63",
+        "is_correct": false
+      },
+      {
+        "content": "59",
+        "is_correct": false
+      },
+      {
+        "content": "61",
+        "is_correct": false
+      },
+      {
+        "content": "60",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 14,
+    "content": "6 × 8 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "51",
+        "is_correct": false
+      },
+      {
+        "content": "48",
+        "is_correct": true
+      },
+      {
+        "content": "47",
+        "is_correct": false
+      },
+      {
+        "content": "49",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 15,
+    "content": "11 × 2 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "25",
+        "is_correct": false
+      },
+      {
+        "content": "21",
+        "is_correct": false
+      },
+      {
+        "content": "23",
+        "is_correct": false
+      },
+      {
+        "content": "22",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 16,
+    "content": "5 × 5 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "25",
+        "is_correct": true
+      },
+      {
+        "content": "28",
+        "is_correct": false
+      },
+      {
+        "content": "24",
+        "is_correct": false
+      },
+      {
+        "content": "26",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 17,
+    "content": "10 × 8 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "79",
+        "is_correct": false
+      },
+      {
+        "content": "81",
+        "is_correct": false
+      },
+      {
+        "content": "80",
+        "is_correct": true
+      },
+      {
+        "content": "83",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 18,
+    "content": "4 × 2 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "7",
+        "is_correct": false
+      },
+      {
+        "content": "11",
+        "is_correct": false
+      },
+      {
+        "content": "9",
+        "is_correct": false
+      },
+      {
+        "content": "8",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 19,
+    "content": "9 × 5 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "46",
+        "is_correct": false
+      },
+      {
+        "content": "44",
+        "is_correct": false
+      },
+      {
+        "content": "48",
+        "is_correct": false
+      },
+      {
+        "content": "45",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 20,
+    "content": "3 × 8 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "25",
+        "is_correct": false
+      },
+      {
+        "content": "24",
+        "is_correct": true
+      },
+      {
+        "content": "23",
+        "is_correct": false
+      },
+      {
+        "content": "27",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 21,
+    "content": "8 × 2 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "16",
+        "is_correct": true
+      },
+      {
+        "content": "19",
+        "is_correct": false
+      },
+      {
+        "content": "17",
+        "is_correct": false
+      },
+      {
+        "content": "15",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 22,
+    "content": "2 × 5 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "10",
+        "is_correct": true
+      },
+      {
+        "content": "9",
+        "is_correct": false
+      },
+      {
+        "content": "13",
+        "is_correct": false
+      },
+      {
+        "content": "11",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 23,
+    "content": "7 × 8 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "57",
+        "is_correct": false
+      },
+      {
+        "content": "55",
+        "is_correct": false
+      },
+      {
+        "content": "59",
+        "is_correct": false
+      },
+      {
+        "content": "56",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 24,
+    "content": "12 × 2 = ?",
+    "category": "Toán học",
+    "difficulty": "medium",
+    "options": [
+      {
+        "content": "24",
+        "is_correct": true
+      },
+      {
+        "content": "27",
+        "is_correct": false
+      },
+      {
+        "content": "25",
+        "is_correct": false
+      },
+      {
+        "content": "23",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 25,
+    "content": "66 - 21 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "45",
+        "is_correct": true
+      },
+      {
+        "content": "48",
+        "is_correct": false
+      },
+      {
+        "content": "46",
+        "is_correct": false
+      },
+      {
+        "content": "44",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 26,
+    "content": "73 - 8 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "68",
+        "is_correct": false
+      },
+      {
+        "content": "64",
+        "is_correct": false
+      },
+      {
+        "content": "66",
+        "is_correct": false
+      },
+      {
+        "content": "65",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 27,
+    "content": "80 - 13 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "70",
+        "is_correct": false
+      },
+      {
+        "content": "68",
+        "is_correct": false
+      },
+      {
+        "content": "67",
+        "is_correct": true
+      },
+      {
+        "content": "66",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 28,
+    "content": "22 - 18 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "5",
+        "is_correct": false
+      },
+      {
+        "content": "3",
+        "is_correct": false
+      },
+      {
+        "content": "4",
+        "is_correct": true
+      },
+      {
+        "content": "7",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 29,
+    "content": "29 - 5 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "24",
+        "is_correct": true
+      },
+      {
+        "content": "25",
+        "is_correct": false
+      },
+      {
+        "content": "23",
+        "is_correct": false
+      },
+      {
+        "content": "27",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 30,
+    "content": "36 - 10 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "26",
+        "is_correct": true
+      },
+      {
+        "content": "29",
+        "is_correct": false
+      },
+      {
+        "content": "25",
+        "is_correct": false
+      },
+      {
+        "content": "27",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 31,
+    "content": "43 - 15 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "27",
+        "is_correct": false
+      },
+      {
+        "content": "29",
+        "is_correct": false
+      },
+      {
+        "content": "31",
+        "is_correct": false
+      },
+      {
+        "content": "28",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 32,
+    "content": "50 - 20 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "30",
+        "is_correct": true
+      },
+      {
+        "content": "31",
+        "is_correct": false
+      },
+      {
+        "content": "33",
+        "is_correct": false
+      },
+      {
+        "content": "29",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 33,
+    "content": "57 - 7 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "53",
+        "is_correct": false
+      },
+      {
+        "content": "51",
+        "is_correct": false
+      },
+      {
+        "content": "49",
+        "is_correct": false
+      },
+      {
+        "content": "50",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 34,
+    "content": "64 - 12 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "51",
+        "is_correct": false
+      },
+      {
+        "content": "55",
+        "is_correct": false
+      },
+      {
+        "content": "53",
+        "is_correct": false
+      },
+      {
+        "content": "52",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "question_id": 35,
+    "content": "71 - 17 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "54",
+        "is_correct": true
+      },
+      {
+        "content": "53",
+        "is_correct": false
+      },
+      {
+        "content": "57",
+        "is_correct": false
+      },
+      {
+        "content": "55",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "question_id": 36,
+    "content": "78 - 4 = ?",
+    "category": "Toán học",
+    "difficulty": "hard",
+    "options": [
+      {
+        "content": "74",
+        "is_correct": true
+      },
+      {
+        "content": "75",
+        "is_correct": false
+      },
+      {
+        "content": "73",
+        "is_correct": false
+      },
+      {
+        "content": "77",
+        "is_correct": false
+      }
+    ]
+  }
+]
