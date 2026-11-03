@@ -297,7 +297,7 @@ Content-Type: application/json
   ]
 }
 
-### Grade session answers
+### Grade all answers in the session
 POST {{baseUrl}}/practice/sessions/{{practiceId}}/grade/
 Authorization: {{tokenP1}}
 

@@ -116,10 +116,7 @@ class PracticeGradeView(APIView):
             return error
         if session['status'] == services.STATUS_ONGOING:
             return Response({"error": "Nộp bài trước khi chấm điểm"}, status=409)
-        result = services.grade_session(id, me)
-        if result is None:
-            return Response({"error": "Không thể chấm session này"}, status=404)
-        return Response(result)
+        return Response(services.grade_session(id, me))
 
 
 class WrongQuestionRecordView(APIView):

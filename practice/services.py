@@ -234,12 +234,11 @@ def submit(practice_id, user_id, answers=None):
 
 
 def grade_session(practice_id, user_id):
-    """Grade answered items that have not been graded yet."""
-    processed = 0
+    """Grade all answered items in a session and return whether grading completed."""
     with transaction.atomic():
         session = get_session(practice_id, for_update=True)
         if not session or session['status'] == STATUS_ONGOING:
-            return None
+            return False
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT order_index, question_id, selected_option_id, response_time_ms "
@@ -250,9 +249,7 @@ def grade_session(practice_id, user_id):
             items = cursor.fetchall()
         for order_index, question_id, selected_option_id, response_time_ms in items:
             grade(practice_id, user_id, order_index, question_id, selected_option_id, response_time_ms)
-            processed += 1
-    return {"graded": processed}
-
+    return True
 
 def record_session_wrong(practice_id, user_id):
     """Record graded items once; the event table makes this endpoint safe to retry."""
