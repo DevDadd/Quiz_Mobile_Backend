@@ -100,13 +100,18 @@ class UserStatsView(APIView):
 
     def get(self, request, id):
         with connection.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM users WHERE user_id = %s", [id])
+            if cursor.fetchone() is None:
+                return Response({"error": "Không tìm thấy người chơi"}, status=404)
+            # avg_win_time uses the same basis as the leaderboard (finished HUMAN matches),
+            # so a player's value is identical on both screens.
             query = """
             SELECT 
               count(*) as played,
               count(*) FILTER (WHERE mp.result = 'win') as win,
               count(*) FILTER (WHERE mp.result = 'draw') as draw,
               count(*) FILTER (WHERE mp.result = 'lose') as lose,
-              AVG(mp.duration_seconds) FILTER (WHERE mp.result = 'win') as avg_win_time
+              AVG(mp.duration_seconds) FILTER (WHERE mp.result = 'win' AND m.opponent_type = 'HUMAN') as avg_win_time
             FROM match_participants mp
             JOIN matches m ON m.match_id = mp.match_id AND m.status = 'finished'
             WHERE mp.user_id = %s
@@ -133,7 +138,7 @@ class UserMatchesView(APIView):
         with connection.cursor() as cursor:
             query = """
             SELECT m.match_id, 
-                   COALESCE(opp_user.display_name, 'BOT') as opponent_name, 
+                   CASE WHEN opp.user_id IS NULL THEN 'BOT' ELSE COALESCE(opp_user.display_name, opp_user.username) END as opponent_name, 
                    mp.result, mp.points_earned, mp.correct_count, mp.duration_seconds, m.ended_at
             FROM match_participants mp
             JOIN matches m ON m.match_id = mp.match_id AND m.status = 'finished'

@@ -37,11 +37,11 @@ def fake_module(name, **kwargs):
 def run():
     db=sqlite3.connect(':memory:')
     db.executescript('''
-    CREATE TABLE users (user_id INTEGER PRIMARY KEY, display_name TEXT, total_score REAL);
+    CREATE TABLE users (user_id INTEGER PRIMARY KEY, username TEXT, display_name TEXT, total_score REAL);
     CREATE TABLE matches (match_id INTEGER PRIMARY KEY, status TEXT, opponent_type TEXT, ended_at TEXT);
     CREATE TABLE match_participants (match_id INTEGER, side TEXT, user_id INTEGER, result TEXT,
        points_earned REAL, correct_count INTEGER, duration_seconds INTEGER);
-    INSERT INTO users VALUES (1,'Player1',10.0),(2,'Player2',12.0),(3,'Player3',7.0);
+    INSERT INTO users VALUES (1,'p1','Player1',10.0),(2,'p2',NULL,12.0),(3,'p3','Player3',7.0);
     INSERT INTO matches VALUES
       (101,'finished','HUMAN','2026-11-01T12:00:00'),
       (102,'finished','BOT','2026-11-01T13:00:00'),
@@ -85,6 +85,8 @@ def run():
     assert history.status_code==200 and len(history.data)==2,history.data
     assert [x['match_id'] for x in history.data]==[102,101],history.data
     assert history.data[0]['opponent_name']=='BOT',history.data
+    assert history.data[1]['opponent_name']=='p2',history.data  # NULL display_name falls back to username
+    assert mod.UserStatsView().get(Request(),999).status_code==404
     print('PASS M02 leaderboard ranking + pagination + stats + history + no ongoing matches')
 
 if __name__=='__main__':
