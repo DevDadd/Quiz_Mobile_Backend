@@ -284,7 +284,7 @@ Content-Type: application/json
   "set_id": {{practiceSetId}}
 }
 
-@practiceId = {{startPractice.response.headers.X-Practice-Id}}
+@practiceId = {{startPractice.response.body.$.practice_id}}
 
 ### Submit final answers
 POST {{baseUrl}}/practice/sessions/{{practiceId}}/submit/

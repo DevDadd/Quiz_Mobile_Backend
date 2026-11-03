@@ -77,11 +77,9 @@ class PracticeSessionCreateView(APIView):
             return Response({"error": error[0]}, status=error[1])
 
         return Response(
+            {"practice_id": practice_id},
             status=201,
-            headers={
-                "Location": f"/practice/sessions/{practice_id}/",
-                "X-Practice-Id": str(practice_id),
-            },
+            headers={"Location": f"/practice/sessions/{practice_id}/"},
         )
 
 
